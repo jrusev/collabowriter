@@ -5,12 +5,11 @@ var livedbMongo = require('livedb-mongo');
 var http = require('http');
 var morgan = require('morgan');
 var serveStatic = require('serve-static');
-var sharejs = require('./lib');
+var sharejs = require('./sharejs');
 
 var app = connect();
 app.use(morgan());
-app.use('/srv', serveStatic(sharejs.scriptsDir));
-app.use(serveStatic("" + __dirname + "/public"));
+app.use(serveStatic('' + __dirname + '/public'));
 
 var backend = livedb.client(livedb.memory());
 // backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
