@@ -1,6 +1,5 @@
 var Duplex = require('stream').Duplex;
 var connect = require('connect');
-var argv = require('optimist').argv;
 var livedb = require('livedb');
 var livedbMongo = require('livedb-mongo');
 var http = require('http');
@@ -58,6 +57,6 @@ wss.on('connection', function (client) {
     return share.listen(stream);
 });
 
-var port = argv.p || 7007;
+var port = 7007;
 server.listen(port);
 console.log("Listening on http://localhost:" + port + "/");
