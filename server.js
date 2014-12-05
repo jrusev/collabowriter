@@ -57,6 +57,6 @@ wss.on('connection', function (client) {
     return share.listen(stream);
 });
 
-var port = 7007;
+var port = process.env.PORT || 7007;
 server.listen(port);
 console.log("Listening on http://localhost:" + port + "/");
