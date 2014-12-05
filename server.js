@@ -25,6 +25,16 @@ var wss = new WebSocketServer({
     server: server
 });
 
+// if (!process.env.NODE_ENV)
+setInterval(function () {
+    var ping = { 'ping': new Date() };
+    var message = JSON.stringify(ping);
+    for(var i in wss.clients) {
+        wss.clients[i].send(message);
+        console.log(new Date());
+    }
+}, 10000);
+
 wss.on('connection', function (client) {
     var stream;
     stream = new Duplex({

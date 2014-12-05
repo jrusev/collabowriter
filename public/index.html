@@ -19,6 +19,10 @@
         var pad = document.getElementById('pad');
 
         var ws = new WebSocket('ws://' + window.location.host);
+        
+        ws.onmessage = function (event) {
+            console.log(JSON.parse(event.data));
+        };
 
         var sjs = new window.sharejs.Connection(ws);
 
