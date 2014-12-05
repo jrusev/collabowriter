@@ -1,26 +1,37 @@
-<style>
-    #pad {
-        width: 50%;
-        height: 50%;
-    }
-</style>
-<textarea id='pad' autofocus>Connecting...</textarea>
-<script src="js/text.js"></script>
-<script src="js/share.uncompressed.js"></script>
-<script>
-    var pad = document.getElementById('pad');
+<!DOCTYPE html>
+<html>
 
-    var ws = new WebSocket('ws://' + window.location.host);
+<head>
+    <title>Collab</title>
+    <style>
+        #pad {
+            width: 40em;
+            height: 6em;
+        }
+    </style>
+</head>
 
-    var sjs = new window.sharejs.Connection(ws);
+<body>
+    <textarea id="pad" autofocus="">Connecting...</textarea>
+    <script src="js/text.js"></script>
+    <script src="js/share.uncompressed.js"></script>
+    <script>
+        var pad = document.getElementById('pad');
 
-    var doc = sjs.get('users', 'seph');
-    console.log(doc);
-    doc.subscribe();
+        var ws = new WebSocket('ws://' + window.location.host);
 
-    doc.whenReady(function () {
-        if (!doc.type) doc.create('text');
-        if (doc.type && doc.type.name === 'text')
-            doc.attachTextarea(pad);
-    });
-</script>
+        var sjs = new window.sharejs.Connection(ws);
+
+        var doc = sjs.get('users', 'seph');
+        console.log(doc);
+        doc.subscribe();
+
+        doc.whenReady(function () {
+            if (!doc.type) doc.create('text');
+            if (doc.type && doc.type.name === 'text')
+                doc.attachTextarea(pad);
+        });
+    </script>
+</body>
+
+</html>
