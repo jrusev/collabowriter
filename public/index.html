@@ -8,7 +8,7 @@
 <script src="js/text.js"></script>
 <script src="js/share.uncompressed.js"></script>
 <script>
-    var elem = document.getElementById('pad');
+    var pad = document.getElementById('pad');
 
     var ws = new WebSocket('ws://' + window.location.host);
 
@@ -21,6 +21,6 @@
     doc.whenReady(function () {
         if (!doc.type) doc.create('text');
         if (doc.type && doc.type.name === 'text')
-            doc.attachTextarea(elem);
+            doc.attachTextarea(pad);
     });
 </script>
