@@ -6,7 +6,7 @@ var livedbMongo = require('livedb-mongo');
 var http = require('http');
 var morgan = require('morgan');
 var serveStatic = require('serve-static');
-var sharejs = require('../lib');
+var sharejs = require('./lib');
 
 var app = connect();
 app.use(morgan());
