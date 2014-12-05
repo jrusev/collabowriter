@@ -25,7 +25,7 @@ var wss = new WebSocketServer({
     server: server
 });
 
-// if (!process.env.NODE_ENV)
+// Ping clients to keep Heroku server awake
 setInterval(function () {
     var ping = { 'ping': new Date() };
     var message = JSON.stringify(ping);
