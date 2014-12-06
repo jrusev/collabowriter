@@ -16,11 +16,11 @@
 
         var socket = new WebSocket('ws://' + window.location.host);
         
-        var sharejsConn = new window.sharejs.Connection(socket);
+        var sharejs = new window.sharejs.Connection(socket);
 
         var collection = 'masterpieces';
         var docName = 'final draft';
-        var doc = sharejsConn.get(collection, docName);
+        var doc = sharejs.get(collection, docName);
         console.log(doc);
         doc.subscribe();
 

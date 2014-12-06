@@ -7,6 +7,7 @@ app.use(logger('combined'));
 app.use(express.static('' + __dirname + '/public'));
 
 var server = http.createServer(app);
+
 require('./server/share')(server);
 
 var port = process.env.PORT || 7007;

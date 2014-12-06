@@ -4,12 +4,17 @@ var sharejs = require('share');
 var livedb = require('livedb');
 var livedbMongo = require('livedb-mongo');
 
-module.exports = function (httpServer) {
-    var backend = livedb.client(livedbMongo('mongodb://localhost/collab?auto_reconnect', {safe:false}))
+var cloudDb = 'mongodb://admin:123456q@ds055690.mongolab.com:55690/collabowriter';
+var localDb = 'mongodb://localhost/collab?auto_reconnect';
+
+module.exports = function (httpServer) {    
+
+    var db = process.env.NODE_ENV ? cloudDb : localDb;
+    
     // var backend = livedb.client(livedb.memory());
-    var shareServer = sharejs.server.createClient({
-        backend: backend
-    });
+    var backend = livedb.client(livedbMongo(db, {safe:false}));
+    
+    var shareServer = sharejs.server.createClient({backend: backend});
 
     require('./websocket')(httpServer, shareServer);
 }
