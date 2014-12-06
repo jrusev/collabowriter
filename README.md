@@ -1,4 +1,4 @@
-### Collaborative web based authoring environment.
+### Collaborative web based authoring environment
 
 Description:
 

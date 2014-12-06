@@ -5,8 +5,9 @@ html {
     -o-background-size: cover;
     background-size: cover;
 }
+
 #pad {
-    width: 80em;
+    width: 60em;
     height: 40em;
     display: block;
     margin: 40px auto;
@@ -15,7 +16,12 @@ html {
     color: white;
     background-color: transparent;
     
-/*    border: none;*/
+/*
+    border: none;
     overflow: auto;
     outline: none;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+*/
 }
