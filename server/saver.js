@@ -1,3 +1,7 @@
+// This script watches for changes in a document and constantly resaves a file
+// with the document's contents.
+//
+// Usage: coffee saver.coffee -d <DOCNAME> [--url http://somehost:8000/sjs] [-f filename]
 module.exports =  function () {
     
     var client = require('share').client;
@@ -15,6 +19,8 @@ module.exports =  function () {
 
     var timeout = null;
     var doc = null;
+    
+    // Rate limit writes to the file at once per second.
     var write = function () {
         if (timeout === null) {
             return timeout = setTimeout(function () {
