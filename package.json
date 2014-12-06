@@ -15,15 +15,13 @@
   "author": "JR",
   "dependencies": {
     "async": "~0.2",
-    "connect": "^3.3.3",
-    "express": "~3",
+    "express": "^3.18.4",
     "hat": "*",
     "livedb": ">=0.2.3",
     "livedb-mongo": "^0.4.1",
     "morgan": "^1.5.0",
     "ottypes": "~1",
     "semver": "~2",
-    "serve-static": "^1.7.1",
     "share": "^0.7.3",
     "ws": "^0.5.0"
   },
