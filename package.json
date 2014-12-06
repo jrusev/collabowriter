@@ -24,6 +24,7 @@
     "ottypes": "~1",
     "semver": "~2",
     "serve-static": "^1.7.1",
+    "share": "^0.7.3",
     "ws": "^0.5.0"
   },
   "devDependencies": {},

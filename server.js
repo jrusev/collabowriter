@@ -5,11 +5,14 @@ var livedbMongo = require('livedb-mongo');
 var http = require('http');
 var morgan = require('morgan');
 var serveStatic = require('serve-static');
-var sharejs = require('./sharejs');
+var sharejs = require('share');
 
 var app = connect();
 app.use(morgan());
+
 app.use(serveStatic('' + __dirname + '/public'));
+// Exposes client side(browser) sharejs files, so they don't need to be put in /public
+//app.use(serveStatic(sharejs.scriptsDir)); 
 
 var backend = livedb.client(livedb.memory());
 // backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
