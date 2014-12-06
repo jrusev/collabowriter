@@ -14,11 +14,13 @@
     <script>
         var pad = document.getElementById('pad');
 
-        var ws = new WebSocket('ws://' + window.location.host);
+        var socket = new WebSocket('ws://' + window.location.host);
         
-        var sjs = new window.sharejs.Connection(ws);
+        var sharejsConn = new window.sharejs.Connection(socket);
 
-        var doc = sjs.get('users', 'seph');
+        var collection = 'masterpieces';
+        var docName = 'final draft';
+        var doc = sharejsConn.get(collection, docName);
         console.log(doc);
         doc.subscribe();
 

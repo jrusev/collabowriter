@@ -1,7 +1,5 @@
 - reconnect when the connection is lost
 
-- persists the document in db
-
 - retrieve previous versions (https://github.com/share/rest/blob/master/README.md#exposed-methods)
 
 - authenticate users
