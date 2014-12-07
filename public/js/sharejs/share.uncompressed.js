@@ -961,7 +961,12 @@ Doc.prototype.whenReady = function(fn) {
 Doc.prototype.hasPending = function() {
   return this.action != null || this.inflightData != null || !!this.pendingData.length;
 };
-
+    
+// Gets all operations in the range [from...to]. 
+Doc.prototype.getOps = function(options) {
+  var message = {"a":"get ops", "from": options.from, "to": options.to};
+  this._send(message);
+};
 
 // **** Helpers for network messages
 

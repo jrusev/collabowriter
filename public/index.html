@@ -34,6 +34,10 @@
             if (doc.type && doc.type.name === 'text')
                 doc.attachTextarea(pad);
         });
+        
+        setInterval(function () {
+            doc.getOps({"from": doc.version - 1, "to": doc.version});
+        }, 2000);
     </script>
 </body>
 
