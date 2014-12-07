@@ -416,7 +416,13 @@ Session.prototype._checkRequest = function(req) {
         if (req.d != null && typeof req.d !== 'string') return 'Invalid docName';
         if (req.to != null && (typeof req.to !== 'number' || req.to < 0)) return 'Invalid "to" parameter';      
         if (typeof req.from !== 'number' || req.from < 0 || req.from > req.to) return 'Invalid "from" parameter';
-  } else {
+  } else if (req.a === 'get version') {
+    // var message = {"a":"get version", "v": version};
+        if (req.c != null && typeof req.c !== 'string') return 'Invalid collection';
+        if (req.d != null && typeof req.d !== 'string') return 'Invalid docName';
+        if (typeof req.v !== 'number' || req.v < 0) return 'Invalid version';      
+  }
+    else {
     return 'Invalid action';
   }
 };
@@ -585,6 +591,25 @@ Session.prototype._handleMessage = function(req, callback) {
 
   // Now process the actual message.
   switch (req.a) {
+    case 'get version':						
+				// var message = {"a":"get version", "v": version};
+				// Get and return a snapshot of the document with the specified version.
+//				agent.getSnapshotAtRevision(collection, docName, req.v, function(err, doc) {
+//						if (err) return callback(err);
+//
+//						this.agent.fetchAndSubscribe(collection, docName, function(err, data) {
+//							if (err) return callback(err);
+//							callback(null, data);
+//						});
+//				});
+					
+				agent.fetch(collection, docName, function(err, doc) {
+						if (err) return callback(err);
+							callback(null, doc);
+						});
+					
+				break;
+          
     case 'get ops': 
       // Get ops
       agent.getOps(collection, docName, req.from, req.to, function(err, results) {
