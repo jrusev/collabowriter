@@ -1,6 +1,6 @@
 'use strict';
 
-var sharejs = require('share');
+var sharejs = require('../sharejs');
 
 module.exports = function (httpServer) {
 
