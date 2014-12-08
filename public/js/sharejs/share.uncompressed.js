@@ -275,7 +275,8 @@ _types['http://sharejs.org/types/textv1'].api = {
   _type.api = {
 
     provides: {
-      json: true
+      json: true,
+			text: true
     },
 
     _fixComponentPaths: function(c) {
@@ -570,55 +571,68 @@ _types['http://sharejs.org/types/textv1'].api = {
         }
 
         var match_path = c.na === undefined ? c.p.slice(0, c.p.length - 1) : c.p;
+				
+				if (c.si !== undefined) {
+					if (this.onInsert) this.onInsert(c.p[1], c.si);
+				}	
+				
+				if (c.sd !== undefined) {
+					if (this.onRemove) this.onRemove(c.p[1], c.sd.length);
+				}
 
-        for (var l = 0; l < this._listeners.length; l++) {
-          var listener = this._listeners[l];
-          var cb = listener.cb;
+        if (this._listeners) {
+	
+									for (var l = 0; l < this._listeners.length; l++) {
+										var listener = this._listeners[l];
+										var cb = listener.cb;
 
-          if (pathEquals(listener.path, match_path)) {
-            switch (listener.event) {
-              case 'insert':
-                if (c.li !== undefined && c.ld === undefined) {
-                  cb(c.p[c.p.length - 1], c.li);
-                } else if (c.oi !== undefined && c.od === undefined) {
-                  cb(c.p[c.p.length - 1], c.oi);
-                } else if (c.si !== undefined) {
-                  cb(c.p[c.p.length - 1], c.si);
-                }
-                break;
-              case 'delete':
-                if (c.li === undefined && c.ld !== undefined) {
-                  cb(c.p[c.p.length - 1], c.ld);
-                } else if (c.oi === undefined && c.od !== undefined) {
-                  cb(c.p[c.p.length - 1], c.od);
-                } else if (c.sd !== undefined) {
-                  cb(c.p[c.p.length - 1], c.sd);
-                }
-                break;
-              case 'replace':
-                if (c.li !== undefined && c.ld !== undefined) {
-                  cb(c.p[c.p.length - 1], c.ld, c.li);
-                } else if (c.oi !== undefined && c.od !== undefined) {
-                  cb(c.p[c.p.length - 1], c.od, c.oi);
-                }
-                break;
-              case 'move':
-                if (c.lm !== undefined) {
-                  cb(c.p[c.p.length - 1], c.lm);
-                }
-                break;
-              case 'add':
-                if (c.na !== undefined) {
-                  cb(c.na);
-                }
-            }
-          }
+										if (pathEquals(listener.path, match_path)) {
+											switch (listener.event) {
+												case 'insert':
+													if (c.li !== undefined && c.ld === undefined) {
+														cb(c.p[c.p.length - 1], c.li);
+													} else if (c.oi !== undefined && c.od === undefined) {
+														cb(c.p[c.p.length - 1], c.oi);
+													} else if (c.si !== undefined) {
+														cb(c.p[c.p.length - 1], c.si);
+													}												
 
-          if (_type.canOpAffectPath(c, listener.path) && listener.event === 'child op') {
-            var child_path = c.p.slice(listener.path.length);
-            cb(child_path, c);
-          }
-        }
+													break;
+												case 'delete':
+													if (c.li === undefined && c.ld !== undefined) {
+														cb(c.p[c.p.length - 1], c.ld);
+													} else if (c.oi === undefined && c.od !== undefined) {
+														cb(c.p[c.p.length - 1], c.od);
+													} else if (c.sd !== undefined) {
+														cb(c.p[c.p.length - 1], c.sd);
+													}
+													break;
+												case 'replace':
+													if (c.li !== undefined && c.ld !== undefined) {
+														cb(c.p[c.p.length - 1], c.ld, c.li);
+													} else if (c.oi !== undefined && c.od !== undefined) {
+														cb(c.p[c.p.length - 1], c.od, c.oi);
+													}
+													break;
+												case 'move':
+													if (c.lm !== undefined) {
+														cb(c.p[c.p.length - 1], c.lm);
+													}
+													break;
+												case 'add':
+													if (c.na !== undefined) {
+														cb(c.na);
+													}
+											}
+										}
+
+										if (_type.canOpAffectPath(c, listener.path) && listener.event === 'child op') {
+											var child_path = c.p.slice(listener.path.length);
+											cb(child_path, c);
+										}
+									}
+				
+				}
       }
     }
   };
@@ -2302,10 +2316,14 @@ Connection.prototype.createSubscribeQuery = function(index, q, options, callback
  *
  * This algorithm is O(N). I suspect you could speed it up somehow using regular expressions.
  */
-var applyChange = function(ctx, oldval, newval) {
+var applyChange = function(ctx, oldval, newval) {	
   // Strings are immutable and have reference equality. I think this test is O(1), so its worth doing.
   if (oldval === newval) return;
-
+	
+	if (typeof oldval !== 'string') {
+		oldval = ctx.get().text;
+	}
+	
   var commonStart = 0;
   while (oldval.charAt(commonStart) === newval.charAt(commonStart)) {
     commonStart++;
@@ -2318,10 +2336,15 @@ var applyChange = function(ctx, oldval, newval) {
   }
 
   if (oldval.length !== commonStart + commonEnd) {
-    ctx.remove(commonStart, oldval.length - commonStart - commonEnd);
+		// function(path, len, cb)
+		// [{p:['key',1,3],sd:'d'}]
+		ctx.remove(['text', commonStart], oldval.length - commonStart - commonEnd);
+    //ctx.remove(commonStart, oldval.length - commonStart - commonEnd);
   }
   if (newval.length !== commonStart + commonEnd) {
-    ctx.insert(commonStart, newval.slice(commonStart, newval.length - commonEnd));
+		// insert: function(path, value, cb)
+		ctx.insert(['text', commonStart], newval.slice(commonStart, newval.length - commonEnd));
+//    ctx.insert(commonStart, newval.slice(commonStart, newval.length - commonEnd));
   }
 };
 
@@ -2334,7 +2357,9 @@ window.sharejs.Doc.prototype.attachTextarea = function(elem, ctx) {
 
   if (!ctx.provides.text) throw new Error('Cannot attach to non-text document');
 
-  elem.value = ctx.get();
+	var snapshot = ctx.get();
+	if (typeof snapshot !== 'string') snapshot = snapshot.text;
+  elem.value = snapshot;
 
   // The current value of the element's text is stored so we can quickly check
   // if its been changed in the event handlers. This is mostly for browsers on
@@ -2367,7 +2392,7 @@ window.sharejs.Doc.prototype.attachTextarea = function(elem, ctx) {
     }
   };
 
-  replaceText(ctx.get());
+  replaceText(snapshot);
 
 
   // *** remote -> local changes

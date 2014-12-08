@@ -22,6 +22,7 @@
 
 var hat = require('hat');
 var assert = require('assert');
+var types = require('ottypes');
 
 // stream is a nodejs 0.10 stream object.
 /**
@@ -594,21 +595,49 @@ Session.prototype._handleMessage = function(req, callback) {
     case 'get version':						
 				// var message = {"a":"get version", "v": version};
 				// Get and return a snapshot of the document with the specified version.
-//				agent.getSnapshotAtRevision(collection, docName, req.v, function(err, doc) {
-//						if (err) return callback(err);
-//
-//						this.agent.fetchAndSubscribe(collection, docName, function(err, data) {
-//							if (err) return callback(err);
-//							callback(null, data);
-//						});
-//				});
+		//				agent.getSnapshotAtRevision(collection, docName, req.v, function(err, doc) {
+		//						if (err) return callback(err);
+		//
+		//						this.agent.fetchAndSubscribe(collection, docName, function(err, data) {
+		//							if (err) return callback(err);
+		//							callback(null, data);
+		//						});
+		//				});
+
+		// Get current snapshot of the document
+		agent.fetch(collection, docName, function(err, doc) {
+				if (err) return callback(err);
 					
-				agent.fetch(collection, docName, function(err, doc) {
-						if (err) return callback(err);
-							callback(null, doc);
+					// doc -> {"data":"In a galaxy...","type":"textv1","v":91,"docName":"name","m":{},"a":"get version"}
+					// get ops that happend between `req.v` and `snapshot.v`
+					agent.getOps(collection, docName, req.v, doc.v, function(err, ops) {
+							if (err) return callback(err);	
+							
+							// invert and apply ops
+							var type = types['json0'];
+							var content = doc.data;
+							// In reverse order
+							for (var i = ops.length - 1; i >= 0; i--) 
+							{
+								var _op = ops[i].op.slice(); 
+								// Invert Op
+								_op = type.invert(_op);
+								content = type.apply(content, _op);
+								console.log('content[' + [i] + ']:' + content)
+							}
+						
+							var oldVersion = {
+                  data: content,
+                  v: req.v,
+									type: doc.type,
+									docName: doc.docName
+              };
+						
+							callback(null, oldVersion);
 						});
-					
-				break;
+				});
+
+		break;
           
     case 'get ops': 
       // Get ops
