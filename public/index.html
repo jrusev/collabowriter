@@ -9,12 +9,16 @@
 
 <body>
 	<textarea id="pad" autofocus="">Connecting...</textarea>
-	<button id="get-version-btn">Get version</button>
+		
+	<button id="get-version-btn">Previous version</button>
+	<input id="version-slider" type="range" min="0" step="1" onchange="printValue('version-slider','version-box')">
+	<input id="version-box" type="text" size="2">
+
 	<script src="js/sharejs/text.js"></script>
 	<script src="js/sharejs/share.uncompressed.js"></script>
 	<script>
 		var pad = document.getElementById('pad');
-			
+
 		var socket = new WebSocket('ws://' + window.location.host);
 		var sharejs = new window.sharejs.Connection(socket);
 
@@ -33,6 +37,7 @@
 					context.set(myObject);
 				}
 				doc.attachTextarea(pad);
+				initSlider(doc.version);
 				doc.on('get version', function (msg) {
 					var text = msg.data.text;
 					console.log('version [' + msg.v + ']: ' + text);
@@ -42,17 +47,37 @@
 		});
 
 		var version = doc.version;
-		document.getElementById('get-version-btn').addEventListener('click', function () {
+		document.getElementById('get-version-btn').addEventListener('click', function (evt) {
 			if (pad.readOnly) {
-					pad.removeAttribute('readonly');	
-					doc.getSnapshotAtRevision(doc.version);
+				pad.removeAttribute('readonly');
+				doc.getSnapshotAtRevision(doc.version);
+				evt.target.innerHTML = 'Previous version';
 			} else {
-					pad.readOnly = true;
-					if (doc.version > 2) {
-						doc.getSnapshotAtRevision(doc.version - 2);
-					}
+				pad.readOnly = true;
+				if (doc.version > 2) {
+					doc.getSnapshotAtRevision(doc.version - 2);
+				}
+				evt.target.innerHTML = 'Current version';
 			}
 		});
+
+		function printValue(sliderID, textboxId) {
+			var textBox = document.getElementById(textboxId);
+			var slider = document.getElementById(sliderID);
+			textBox.value = slider.value;
+				
+			pad.readOnly = true;
+				if (slider.value) {
+					doc.getSnapshotAtRevision(+slider.value);
+				}
+		}
+
+		function initSlider(maxValue) {
+			var slider = document.getElementById("version-slider");
+			slider.max = maxValue;
+			slider.value = slider.max;
+			printValue('version-slider', 'version-box');
+		}
 	</script>
 </body>
 
