@@ -3,68 +3,37 @@
 
 <head>
 	<title>CollaboWriter</title>
-	<!--
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
-    <link href='http://fonts.googleapis.com/css?family=PT+Mono' rel='stylesheet' type='text/css'>
-    <link href='http://fonts.googleapis.com/css?family=Cutive' rel='stylesheet' type='text/css'>
--->
 	<link href='http://fonts.googleapis.com/css?family=Special+Elite' rel='stylesheet' type='text/css'>
 	<link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 	<textarea id="pad" autofocus="">Connecting...</textarea>
-	<div id="doc"></div>
 	<script src="js/sharejs/text.js"></script>
 	<script src="js/sharejs/share.uncompressed.js"></script>
 	<script>
-		var pad = document.getElementById('pad');
-
 		var socket = new WebSocket('ws://' + window.location.host);
-
 		var sharejs = new window.sharejs.Connection(socket);
 
 		var doc = sharejs.get('json_test', 'test_doc_1');
-
-		console.log(doc);
-
 		doc.subscribe();
 
 		doc.whenReady(function () {			
 			if (!doc.type) doc.create('json0');
-			if (doc.type && doc.type.name === 'json0') {
-				var context = doc.createContext();
+			if (doc.type && doc.type.name === 'json0') {				
 				if (doc.created) {
+					var context = doc.createContext();
 					var myObject = {text: "some text"};
 					context.set(myObject);
 				}
 			}
+			var pad = document.getElementById('pad');
 			doc.attachTextarea(pad);
-//			var text = context.createContextAt(['text']);
-//			text.on('insert', function (op) {})
 		});
 
 		setInterval(function () {
-			//            doc.getOps({"from": doc.version - 1, "to": doc.version});
 			doc.getSnapshotAtRevision(doc.version - 2);
 		}, 2000);
-
-		 //		var collection = 'masterpieces';
-		 //		var docName = 'final draft';
-		 //		var doc = sharejs.get(collection, docName);
-		 //		console.log(doc);
-		 //		doc.subscribe();
-		 //
-		 //		doc.whenReady(function () {
-		 //			if (!doc.type) doc.create('text');
-		 //			if (doc.type && doc.type.name === 'text')
-		 //				doc.attachTextarea(pad);
-		 //		});
-		 //
-		 //		setInterval(function () {
-		 //		//            doc.getOps({"from": doc.version - 1, "to": doc.version});
-		 //		doc.getSnapshotAtRevision(doc.version - 10);
-		 //		}, 2000);
 	</script>
 </body>
 

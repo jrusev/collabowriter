@@ -640,7 +640,7 @@ Session.prototype._handleMessage = function(req, callback) {
 		break;
           
     case 'get ops': 
-      // Get ops
+      // Get ops			
       agent.getOps(collection, docName, req.from, req.to, function(err, results) {
           if (err) return callback(err);
           for (var i = 0; i < results.length; i++) {
