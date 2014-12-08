@@ -1126,6 +1126,10 @@ Doc.prototype._onMessage = function(msg) {
     case 'meta':
       if (console) console.warn('Unhandled meta op:', msg);
       break;
+			
+		case 'get version':
+			this.emit('get version', msg);
+			break;		
 
     default:
       if (console) console.warn('Unhandled document message:', msg);
@@ -1944,6 +1948,7 @@ Connection.prototype.bindToSocket = function(socket) {
  * @param {String} msg.a action
  */
 Connection.prototype.handleMessage = function(msg) {
+	if (!msg.a) return console.log('Unhandled message: ' + JSON.stringify(msg));
   // Switch on the message action. Most messages are for documents and are
   // handled in the doc class.
   switch (msg.a) {

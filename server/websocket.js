@@ -17,7 +17,7 @@ module.exports = function init(httpServer, shareServer) {
         var message = JSON.stringify(ping);
         for (var i in wss.clients) {
             wss.clients[i].send(message);
-            console.log(new Date());
+            console.log(message);
         }
     }, 10000);
 
