@@ -593,22 +593,11 @@ Session.prototype._handleMessage = function(req, callback) {
   // Now process the actual message.
   switch (req.a) {
     case 'get version':						
-				// var message = {"a":"get version", "v": version};
-				// Get and return a snapshot of the document with the specified version.
-		//				agent.getSnapshotAtRevision(collection, docName, req.v, function(err, doc) {
-		//						if (err) return callback(err);
-		//
-		//						this.agent.fetchAndSubscribe(collection, docName, function(err, data) {
-		//							if (err) return callback(err);
-		//							callback(null, data);
-		//						});
-		//				});
-
 		// Get current snapshot of the document
 		agent.fetch(collection, docName, function(err, doc) {
 				if (err) return callback(err);
 					
-					// doc -> {"data":"In a galaxy...","type":"textv1","v":91,"docName":"name","m":{},"a":"get version"}
+					// doc -> {"data":"Hello","type":"textv1","v":91,"docName":"name","m":{},"a":"get version"}
 					// get ops that happend between `req.v` and `snapshot.v`
 					agent.getOps(collection, docName, req.v, doc.v, function(err, ops) {
 							if (err) return callback(err);
@@ -625,7 +614,6 @@ Session.prototype._handleMessage = function(req, callback) {
 								// Invert Op
 								_op = type.invert(_op);
 								content = type.apply(content, _op);
-								console.log('content[' + [i] + ']:' + content)
 							}
 						
 							var oldVersion = {

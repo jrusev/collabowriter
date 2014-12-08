@@ -34,7 +34,9 @@
 				}
 				doc.attachTextarea(pad);
 				doc.on('get version', function (msg) {
-					console.log('get version', msg)
+					var text = msg.data.text;
+					console.log('version [' + msg.v + ']: ' + text);
+					pad.value = text;
 				});
 			}
 		});
@@ -43,6 +45,7 @@
 		document.getElementById('get-version-btn').addEventListener('click', function () {
 			if (pad.readOnly) {
 					pad.removeAttribute('readonly');	
+					doc.getSnapshotAtRevision(doc.version);
 			} else {
 					pad.readOnly = true;
 					if (doc.version > 2) {
