@@ -611,7 +611,8 @@ Session.prototype._handleMessage = function(req, callback) {
 					// doc -> {"data":"In a galaxy...","type":"textv1","v":91,"docName":"name","m":{},"a":"get version"}
 					// get ops that happend between `req.v` and `snapshot.v`
 					agent.getOps(collection, docName, req.v, doc.v, function(err, ops) {
-							if (err) return callback(err);	
+							if (err) return callback(err);
+							if (!ops) return callback(null, doc.snapshot);
 							
 							// invert and apply ops
 							var type = types['json0'];
@@ -619,6 +620,7 @@ Session.prototype._handleMessage = function(req, callback) {
 							// In reverse order
 							for (var i = ops.length - 1; i >= 0; i--) 
 							{
+								if (!ops[i].op) continue;
 								var _op = ops[i].op.slice(); 
 								// Invert Op
 								_op = type.invert(_op);

@@ -15,24 +15,29 @@
 		var socket = new WebSocket('ws://' + window.location.host);
 		var sharejs = new window.sharejs.Connection(socket);
 
-		var doc = sharejs.get('json_test', 'test_doc_1');
+		var doc = sharejs.get('masterpieces', 'first draft');
 		doc.subscribe();
 
-		doc.whenReady(function () {			
+		doc.whenReady(function () {
 			if (!doc.type) doc.create('json0');
-			if (doc.type && doc.type.name === 'json0') {				
-				if (doc.created) {
+			if (doc.type && doc.type.name === 'json0') {
+				
+				if (!doc.snapshot) {
 					var context = doc.createContext();
-					var myObject = {text: "some text"};
+					var myObject = {
+						text: "Enter some text here..."
+					};
 					context.set(myObject);
 				}
+				var pad = document.getElementById('pad');
+				doc.attachTextarea(pad);
 			}
-			var pad = document.getElementById('pad');
-			doc.attachTextarea(pad);
 		});
 
 		setInterval(function () {
-			doc.getSnapshotAtRevision(doc.version - 2);
+			if (doc.version > 2) {
+				// doc.getSnapshotAtRevision(doc.version - 2);
+			}
 		}, 2000);
 	</script>
 </body>
