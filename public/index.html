@@ -1,97 +1,93 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-	<title>CollaboWriter</title>
-	<link href='http://fonts.googleapis.com/css?family=Special+Elite' rel='stylesheet' type='text/css'>
-	<!--	<link rel="stylesheet" href="css/bootstrap.css">-->
-	<link rel="stylesheet" href="css/style.css">
-	<link rel="stylesheet" href="css/slider.css">
+    <title>CollaboWriter</title>
+    <link href='http://fonts.googleapis.com/css?family=Special+Elite' rel='stylesheet' type='text/css'>
+    <!--	<link rel="stylesheet" href="css/bootstrap.css">-->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/slider.css">
 </head>
-
 <body>
-	<textarea id="pad" autofocus="">Connecting...</textarea>
-	<div id="version-control">
-		<input id="version-slider" type="range" min="0" max="100" value="100" step="1">
-		<span id="version-line"></span>
-	</div>
+    <textarea id="pad" autofocus="">Connecting...</textarea>
+    <div id="version-control">
+        <input id="version-slider" type="range" min="0" max="100" value="100" step="1">
+        <span id="version-line"></span>
+    </div>
 
-	<script src="js/sharejs/text.js"></script>
-	<script src="js/sharejs/share.uncompressed.js"></script>
-	<!--	<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>-->
-	<script>
-		(function () {
+    <script src="js/sharejs/text.js"></script>
+    <script src="js/sharejs/share.uncompressed.js"></script>
+    <!--	<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>-->
+    <script>
+        (function () {
 
-			var pad = document.getElementById('pad');
-			var slider = document.getElementById("version-slider");
-			var versionBox;
+            var pad = document.getElementById('pad');
+            var slider = document.getElementById("version-slider");
+            var versionBox;
 
-			var socket = new WebSocket('ws://' + window.location.host);
-			var sharejs = new window.sharejs.Connection(socket);
+            var socket = new WebSocket('ws://' + window.location.host);
+            var sharejs = new window.sharejs.Connection(socket);
 
-			var doc, docContext, docVersion;
-			doc = sharejs.get('masterpieces', 'first draft');
-			doc.subscribe();
+            var doc, docContext, docVersion;
+            doc = sharejs.get('masterpieces', 'first draft');
+            doc.subscribe();
 
-			doc.whenReady(function () {
-				if (!doc.type) doc.create('json0');
-				if (doc.type && doc.type.name === 'json0') {
+            doc.whenReady(function () {
+                if (!doc.type) doc.create('json0');
+                if (doc.type && doc.type.name === 'json0') {
 
-					if (!doc.snapshot) {
-						// Create new document
-						docContext = doc.createContext();
-						var myObject = {
-							text: "Enter some text here..."
-						};
-						docContext.set(myObject);
-					}
-					doc.attachTextarea(pad);
-					docVersion = doc.version;
-					initSlider(docVersion);
+                    if (!doc.snapshot) {
+                        // Create new document
+                        docContext = doc.createContext();
+                        var myObject = {
+                            text: "Enter some text here..."
+                        };
+                        docContext.set(myObject);
+                    }
+                    doc.attachTextarea(pad);
+                    docVersion = doc.version;
+                    initSlider(docVersion);
 
-					// Called when a previous doc version is received
-					doc.on('get version', function (msg) {
-						var text = msg.data.text;
-						pad.value = text;
-					});
+                    // Called when a previous doc version is received
+                    doc.on('get version', function (msg) {
+                        var text = msg.data.text;
+                        pad.value = text;
+                    });
 
-					doc.on('version update', function (newVersion) {
-						docVersion = newVersion;
-						if (slider.value == slider.max) {
-							slider.max = docVersion;
-							slider.value = docVersion;
-							versionBox.innerHTML = docVersion;
-						}
-						slider.max = docVersion;
-					});
-				}
-			});
+                    doc.on('version update', function (newVersion) {
+                        docVersion = newVersion;
+                        if (slider.value == slider.max) {
+                            slider.max = docVersion;
+                            slider.value = docVersion;
+                            versionBox.innerHTML = docVersion;
+                        }
+                        slider.max = docVersion;
+                    });
+                }
+            });
 
-			slider.addEventListener("input", function () {
-				var sliderValue = +slider.value;
-				versionBox.innerHTML = sliderValue;
+            slider.addEventListener("input", function () {
+                var sliderValue = +slider.value;
+                versionBox.innerHTML = sliderValue;
 
-				if (sliderValue != docVersion) {
-					pad.disabled = true;
-					doc.removeContexts();
-				} else {
-					pad.disabled = false;
-					doc.attachTextarea(pad);
-				}
-				if (sliderValue >= 0 && sliderValue <= docVersion) {
-					doc.getSnapshotAtRevision(sliderValue);
-				}
-			});
+                if (sliderValue != docVersion) {
+                    pad.disabled = true;
+                    doc.removeContexts();
+                } else {
+                    pad.disabled = false;
+                    doc.attachTextarea(pad);
+                }
+                if (sliderValue >= 0 && sliderValue <= docVersion) {
+                    doc.getSnapshotAtRevision(sliderValue);
+                }
+            });
 
-			function initSlider(version) {
-				document.getElementById('version-line').innerHTML = 'Version: <span id="version-box"></span>';
-				versionBox = document.getElementById('version-box');
-				versionBox.innerHTML = slider.value = slider.max = version;
-			}
+            function initSlider(version) {
+                document.getElementById('version-line').innerHTML = 'Version: <span id="version-box"></span>';
+                versionBox = document.getElementById('version-box');
+                versionBox.innerHTML = slider.value = slider.max = version;
+            }
 
-		})();
-	</script>
-
+        })();
+    </script>
 </body>
-
 </html>
