@@ -948,6 +948,7 @@ Doc.prototype.ingestData = function(data) {
 
 
   this.version = data.v;
+	this.emit('version update', this.version);
   // data.data is what the server will actually send. data.snapshot is the old
   // field name - supported now for backwards compatibility.
   this.snapshot = data.data;
@@ -1420,6 +1421,7 @@ Doc.prototype._otApply = function(opData, context) {
       // This is the most common case, simply applying the operation to the local snapshot.
       this.snapshot = type.apply(this.snapshot, op);
       this.emit('op', op, context);
+			this.emit('version update', this.version);
     }
   }
   // Its possible for none of the above cases to match, in which case the op is
@@ -1704,6 +1706,7 @@ Doc.prototype._opAcknowledged = function(msg) {
 
     // Our create has been acknowledged. This is the same as ingesting some data.
     this.version = msg.v;
+		this.emit('version update', this.version);
     this.state = 'ready';
     var _this = this;
     setTimeout(function() { _this.emit('ready'); }, 0);
@@ -1719,6 +1722,7 @@ Doc.prototype._opAcknowledged = function(msg) {
   
   // The op was committed successfully. Increment the version number
   this.version++;
+	this.emit('version update', this.version);
 
   this._clearInflightOp();
 };

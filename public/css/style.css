@@ -6,8 +6,12 @@ html {
     background-size: cover;
 }
 
+body {
+	background-color:transparent;
+}
+
 #pad, #pad:focus {
-    display: block;
+    display: inline-block;
     height: 30em;
     padding: 6px 12px;
     margin-top: 20px;
@@ -22,7 +26,7 @@ html {
     resize: none;
     overflow: auto;
     
-    float: left;    
+/*    float: left;    */
     width: 50%;
     margin-left: 25%;
 
@@ -36,4 +40,17 @@ html {
     -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
     transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
     outline-color: #ccc;
+}
+
+#version-control {
+	display: inline-block; 
+	padding: 6px 12px;
+	width: 50%;
+	margin-left: 25%;
+	text-align: center;
+}
+
+#version-slider {
+	display: block;
+	width: 100%;
 }
