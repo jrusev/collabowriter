@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>CollaboWriter</title>
     <link href='http://fonts.googleapis.com/css?family=Special+Elite' rel='stylesheet' type='text/css'>
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/slider.css">
 </head>
+
 <body>
     <textarea id="pad" autofocus="">Connecting...</textarea>
     <div id="version-control">
@@ -20,74 +22,83 @@
     <script>
         (function () {
 
-            var pad = document.getElementById('pad');
-            var slider = document.getElementById("version-slider");
-            var versionBox;
+            var sharejs;
 
-            var socket = new WebSocket('ws://' + window.location.host);
-            var sharejs = new window.sharejs.Connection(socket);
+            getDoc('masterpieces', 'first draft', function (doc) {
 
-            var doc, docContext, docVersion;
-            doc = sharejs.get('masterpieces', 'first draft');
-            doc.subscribe();
+                var pad = document.getElementById('pad');
+                var slider = document.getElementById("version-slider");
+                var versionBox;
 
-            doc.whenReady(function () {
-                if (!doc.type) doc.create('json0');
-                if (doc.type && doc.type.name === 'json0') {
+                doc.attachTextarea(pad);
+                var docVersion = doc.version;
+                initSlider(docVersion);
 
-                    if (!doc.snapshot) {
-                        // Create new document
-                        docContext = doc.createContext();
-                        var myObject = {
-                            text: "Enter some text here..."
-                        };
-                        docContext.set(myObject);
-                    }
-                    doc.attachTextarea(pad);
-                    docVersion = doc.version;
-                    initSlider(docVersion);
+                // Called when a previous doc version is received
+                doc.on('get version', function (msg) {
+                    var text = msg.data.text;
+                    pad.value = text;
+                });
 
-                    // Called when a previous doc version is received
-                    doc.on('get version', function (msg) {
-                        var text = msg.data.text;
-                        pad.value = text;
-                    });
-
-                    doc.on('version update', function (newVersion) {
-                        docVersion = newVersion;
-                        if (slider.value == slider.max) {
-                            slider.max = docVersion;
-                            slider.value = docVersion;
-                            versionBox.innerHTML = docVersion;
-                        }
+                doc.on('version update', function (newVersion) {
+                    docVersion = newVersion;
+                    if (slider.value == slider.max) {
                         slider.max = docVersion;
-                    });
+                        slider.value = docVersion;
+                        versionBox.innerHTML = docVersion;
+                    }
+                    slider.max = docVersion;
+                });
+
+                slider.addEventListener("input", function () {
+                    var sliderValue = +slider.value;
+                    versionBox.innerHTML = sliderValue;
+
+                    if (sliderValue != docVersion) {
+                        pad.disabled = true;
+                        doc.removeContexts();
+                    } else {
+                        pad.disabled = false;
+                        doc.attachTextarea(pad);
+                    }
+                    if (sliderValue >= 0 && sliderValue <= docVersion) {
+                        doc.getSnapshotAtRevision(sliderValue);
+                    }
+                });
+
+                function initSlider(version) {
+                    document.getElementById('version-line').innerHTML = 'Version: <span id="version-box"></span>';
+                    versionBox = document.getElementById('version-box');
+                    versionBox.innerHTML = slider.value = slider.max = version;
                 }
             });
 
-            slider.addEventListener("input", function () {
-                var sliderValue = +slider.value;
-                versionBox.innerHTML = sliderValue;
-
-                if (sliderValue != docVersion) {
-                    pad.disabled = true;
-                    doc.removeContexts();
-                } else {
-                    pad.disabled = false;
-                    doc.attachTextarea(pad);
+            function getDoc(collection, docName, cb) {
+                if (!sharejs) {
+                    var socket = new WebSocket('ws://' + window.location.host);
+                    sharejs = new window.sharejs.Connection(socket);
                 }
-                if (sliderValue >= 0 && sliderValue <= docVersion) {
-                    doc.getSnapshotAtRevision(sliderValue);
-                }
-            });
+                var doc = sharejs.get(collection, docName);
+                doc.subscribe();
+                doc.whenReady(function () {
+                    if (!doc.type) doc.create('json0');
+                    if (doc.type && doc.type.name === 'json0') {
 
-            function initSlider(version) {
-                document.getElementById('version-line').innerHTML = 'Version: <span id="version-box"></span>';
-                versionBox = document.getElementById('version-box');
-                versionBox.innerHTML = slider.value = slider.max = version;
+                        if (!doc.snapshot) {
+                            // Create new document
+                            var docContext = doc.createContext();
+                            var myObject = {
+                                text: "Enter some text here..."
+                            };
+                            docContext.set(myObject);
+                        }
+                        cb(doc);
+                    }
+                });
             }
 
         })();
     </script>
 </body>
+
 </html>

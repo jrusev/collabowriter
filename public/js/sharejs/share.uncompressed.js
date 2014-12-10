@@ -2329,6 +2329,7 @@ var applyChange = function(ctx, oldval, newval) {
   // Strings are immutable and have reference equality. I think this test is O(1), so its worth doing.
   if (oldval === newval) return;
 	
+  // TODO: This is hard-coded solution for editing json documents (they must have a ['text'] property)
 	if (typeof oldval !== 'string') {
 		oldval = ctx.get().text;
 	}
@@ -2345,13 +2346,12 @@ var applyChange = function(ctx, oldval, newval) {
   }
 
   if (oldval.length !== commonStart + commonEnd) {
-		// function(path, len, cb)
-		// [{p:['key',1,3],sd:'d'}]
+    // TODO: This is hard-coded solution for editing json documents (they must have a ['text'] property)
 		ctx.remove(['text', commonStart], oldval.length - commonStart - commonEnd);
     //ctx.remove(commonStart, oldval.length - commonStart - commonEnd);
   }
   if (newval.length !== commonStart + commonEnd) {
-		// insert: function(path, value, cb)
+		// TODO: This is hard-coded solution for editing json documents (they must have a ['text'] property)
 		ctx.insert(['text', commonStart], newval.slice(commonStart, newval.length - commonEnd));
 //    ctx.insert(commonStart, newval.slice(commonStart, newval.length - commonEnd));
   }
@@ -2367,6 +2367,7 @@ window.sharejs.Doc.prototype.attachTextarea = function(elem, ctx) {
   if (!ctx.provides.text) throw new Error('Cannot attach to non-text document');
 
 	var snapshot = ctx.get();
+  // TODO: This is hard-coded solution for editing json documents (they must have a ['text'] property)
 	if (typeof snapshot !== 'string') snapshot = snapshot.text;
   elem.value = snapshot;
 
