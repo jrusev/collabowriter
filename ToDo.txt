@@ -1,7 +1,12 @@
-- add comments
-
+- remove credentials: 
+  https://devcenter.heroku.com/articles/config-vars
+  http://programmers.stackexchange.com/questions/163506/how-does-one-handle-sensitive-data-when-using-github-and-heroku
+- improve slider (only request changes form the last snapshot)
+- attach textarea to subdoc (must inherit attachTextarea)
 - reconnect when the connection is lost
 
+
 - authenticate users
+
 
 - transmit cursor position
