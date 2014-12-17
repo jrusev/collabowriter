@@ -15,7 +15,7 @@
   "author": "JR",
   "dependencies": {
     "async": "~0.2",
-    "express": "^3.18.4",
+    "express": "^4.10.6",
     "hat": "*",
     "livedb": ">=0.2.3",
     "livedb-mongo": "^0.4.1",
