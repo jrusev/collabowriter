@@ -2,6 +2,9 @@
   "name": "Collab",
   "version": "1.0.0",
   "description": "Collaborative web based authoring environment",
+  "engines": {
+    "node": "0.10.x"
+  },
   "keywords": [
     "operational transformation",
     "ot",

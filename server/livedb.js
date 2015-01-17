@@ -3,7 +3,7 @@
 var livedb = require('livedb');
 var livedbMongo = require('livedb-mongo');
 
-var cloudDb = 'mongodb://admin:123456q@ds055690.mongolab.com:55690/collabowriter';
+var cloudDb = process.env.CLOUD_DB;
 var localDb = 'mongodb://localhost/collab?auto_reconnect';
 
 var db = process.env.NODE_ENV ? cloudDb : localDb;
