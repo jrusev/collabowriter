@@ -95,7 +95,7 @@ function Session(instance, stream) {
 }
 
 Session.prototype._cleanup = function() {
-  if (this.closed) return 
+  if (this.closed) return
   this.closed = true;
 
   // Remove the pump listener
@@ -415,13 +415,13 @@ Session.prototype._checkRequest = function(req) {
   } else if (req.a === 'get ops') {
         if (req.c != null && typeof req.c !== 'string') return 'Invalid collection';
         if (req.d != null && typeof req.d !== 'string') return 'Invalid docName';
-        if (req.to != null && (typeof req.to !== 'number' || req.to < 0)) return 'Invalid "to" parameter';      
+        if (req.to != null && (typeof req.to !== 'number' || req.to < 0)) return 'Invalid "to" parameter';
         if (typeof req.from !== 'number' || req.from < 0 || req.from > req.to) return 'Invalid "from" parameter';
   } else if (req.a === 'get version') {
     // var message = {"a":"get version", "v": version};
         if (req.c != null && typeof req.c !== 'string') return 'Invalid collection';
         if (req.d != null && typeof req.d !== 'string') return 'Invalid docName';
-        if (typeof req.v !== 'number' || req.v < 0) return 'Invalid version';      
+        if (typeof req.v !== 'number' || req.v < 0) return 'Invalid version';
   }
     else {
     return 'Invalid action';
@@ -480,7 +480,7 @@ Session.prototype._processQueryResults = function(results, qopts) {
           });
         })(collection, docName);
       }
-      
+
       if (qopts.docMode === 'sub') {
         // Subscribe to the document automatically if we aren't already subscribed
         // & subscription was requested. This code feels brittle to me, both
@@ -592,67 +592,56 @@ Session.prototype._handleMessage = function(req, callback) {
 
   // Now process the actual message.
   switch (req.a) {
-    case 'get version':						
+    case 'get version':
 		// Get current snapshot of the document
 		agent.fetch(collection, docName, function(err, doc) {
 				if (err) return callback(err);
-					
-					// doc -> {"data":"Hello","type":"textv1","v":91,"docName":"name","m":{},"a":"get version"}
+
+					// doc -> {"data":{},"type":"textv1","v":91,"docName":"name","m":{},"a":"get version"}
 					// get ops that happend between `req.v` and `snapshot.v`
 					agent.getOps(collection, docName, req.v, doc.v, function(err, ops) {
 							if (err) return callback(err);
 							if (!ops) return callback(null, doc.snapshot);
-							
+
 							// invert and apply ops
 							var type = types['json0'];
 							var content = doc.data;
 							// In reverse order
-							for (var i = ops.length - 1; i >= 0; i--) 
+							for (var i = ops.length - 1; i >= 0; i--)
 							{
 								if (!ops[i].op) continue;
-								var _op = ops[i].op.slice(); 
+								var _op = ops[i].op.slice();
 								// Invert Op
 								_op = type.invert(_op);
 								content = type.apply(content, _op);
 							}
-						
+
 							var oldVersion = {
                   data: content,
                   v: req.v,
 									type: doc.type,
 									docName: doc.docName
               };
-						
+
 							callback(null, oldVersion);
 						});
 				});
 
 		break;
-          
-    case 'get ops': 
-      // Get ops			
-      agent.getOps(collection, docName, req.from, req.to, function(err, results) {
+
+    case 'get ops':
+      agent.getOps(collection, docName, req.from, req.to, function(err, ops) {
           if (err) return callback(err);
-          for (var i = 0; i < results.length; i++) {
-              var op = results[i];
-              var msg = {
-                  op: op.op,
-                  v: op.v,
-                  src: op.src,
-                  m: { 'ts': op.m.ts },
-                  seq: op.seq
-              };
-              self._send(msg);
-          }
-          callback(null, {});
+          //self._send(ops);
+          callback(null, {data: ops});
         });
-          
+
         break;
     case 'fetch':
       // Fetch request.
       if (req.v != null) {
         // It says fetch on the tin, but if a version is specified the client
-        // actually wants me to fetch some ops. 
+        // actually wants me to fetch some ops.
         agent.getOps(collection, docName, req.v, -1, function(err, results) {
           if (err) return callback(err);
           for (var i = 0; i < results.length; i++) {
@@ -868,4 +857,3 @@ Session.prototype.subscribeStats = function() {
 
   return stats;
 };
-

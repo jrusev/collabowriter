@@ -35,9 +35,8 @@
                 initSlider(docVersion);
 
                 // Called when a previous doc version is received
-                doc.on('get version', function (msg) {
-                    var text = msg.data.text;
-                    pad.value = text;
+                doc.on('get version', function (newText) {
+                    pad.value = newText;
                 });
 
                 doc.on('version update', function (newVersion) {

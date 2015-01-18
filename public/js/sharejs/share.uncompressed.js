@@ -275,8 +275,7 @@ _types['http://sharejs.org/types/textv1'].api = {
   _type.api = {
 
     provides: {
-      json: true,
-			text: true
+      json: true
     },
 
     _fixComponentPaths: function(c) {
@@ -571,17 +570,17 @@ _types['http://sharejs.org/types/textv1'].api = {
         }
 
         var match_path = c.na === undefined ? c.p.slice(0, c.p.length - 1) : c.p;
-				
+
 				if (c.si !== undefined) {
 					if (this.onInsert) this.onInsert(c.p[1], c.si);
-				}	
-				
+				}
+
 				if (c.sd !== undefined) {
 					if (this.onRemove) this.onRemove(c.p[1], c.sd.length);
 				}
 
         if (this._listeners) {
-	
+
 									for (var l = 0; l < this._listeners.length; l++) {
 										var listener = this._listeners[l];
 										var cb = listener.cb;
@@ -595,7 +594,7 @@ _types['http://sharejs.org/types/textv1'].api = {
 														cb(c.p[c.p.length - 1], c.oi);
 													} else if (c.si !== undefined) {
 														cb(c.p[c.p.length - 1], c.si);
-													}												
+													}
 
 													break;
 												case 'delete':
@@ -631,7 +630,7 @@ _types['http://sharejs.org/types/textv1'].api = {
 											cb(child_path, c);
 										}
 									}
-				
+
 				}
       }
     }
@@ -822,7 +821,7 @@ var Doc = exports.Doc = function(connection, collection, name) {
   this.snapshot = undefined;
 
   // **** State in document:
- 
+
   // The action the document tries to perform with the server
   //
   // - subscribe
@@ -830,7 +829,7 @@ var Doc = exports.Doc = function(connection, collection, name) {
   // - fetch
   // - submit: send an operation
   this.action = null;
- 
+
   // The data the document object stores can be in one of the following three states:
   //   - No data. (null) We honestly don't know whats going on.
   //   - Floating ('floating'): we have a locally created document that hasn't
@@ -857,7 +856,7 @@ var Doc = exports.Doc = function(connection, collection, name) {
   // The editing contexts. These are usually instances of the type API when the
   // document is ready for edits.
   this.editingContexts = [];
-  
+
   // The op that is currently roundtripping to the server, or null.
   //
   // When the connection reconnects, the inflight op is resubmitted.
@@ -976,19 +975,28 @@ Doc.prototype.whenReady = function(fn) {
 Doc.prototype.hasPending = function() {
   return this.action != null || this.inflightData != null || !!this.pendingData.length;
 };
-    
-// Gets all operations in the range [from...to]. 
+
+// Gets all operations in the range [from...to].
 Doc.prototype.getOps = function(options) {
   var message = {"a":"get ops", "from": options.from, "to": options.to};
   this._send(message);
 };
-    
+
 // Get and return a snapshot of the document with the specified version.
 Doc.prototype.getSnapshotAtRevision = function(version) {
-  var message = {"a":"get version", "v": version};
+  // var message = {"a":"get version", "v": version};
+  // this._send(message);
+  var from = this.lastDoc ? this.lastDoc.version : this.version;
+  var to = version;
+  if (from > to) {
+    var tmp = from;
+    from = to;
+    to = tmp;
+  }
+  var message = {"a":"get ops", "from": from, "to": to};
   this._send(message);
-};    
-    
+};
+
 
 // **** Helpers for network messages
 
@@ -1100,7 +1108,7 @@ Doc.prototype._onMessage = function(msg) {
         // In this case, we can safely ignore the old (duplicate) operation.
         break;
       }
-      
+
       if (msg.v > this.version) {
         // If we get in here, it means we missed an operation from the server,
         // or operations are being sent to the client out of order. This
@@ -1127,15 +1135,61 @@ Doc.prototype._onMessage = function(msg) {
     case 'meta':
       if (console) console.warn('Unhandled meta op:', msg);
       break;
-			
+
 		case 'get version':
 			this.emit('get version', msg);
-			break;		
+			break;
+
+    case 'get ops':
+      var oldVersion = this._getVersionFromOps(msg.data);
+      this.emit('get version', oldVersion.snapshot['text']);
+      break;
 
     default:
       if (console) console.warn('Unhandled document message:', msg);
       break;
   }
+};
+
+Doc.prototype._getVersionFromOps = function(ops) {
+  if (!ops) return;
+
+  var doc = this.lastDoc || this;
+  // invert and apply ops
+  var type = types['json0'];
+  var content = doc.snapshot;
+  if (doc.version == ops[0].v) {
+    var finalVersion = ops[ops.length - 1].v + 1;
+    // In normal order
+    for (var i = 0; i < ops.length; i++) {
+      if (!ops[i].op) continue;
+      var _op = ops[i].op.slice();
+      content = type.apply(content, _op);
+    }
+  } else if (doc.version == ops[ops.length - 1].v + 1) {
+    var finalVersion = ops[0].v;
+    // In reverse order
+    for (var i = ops.length - 1; i >= 0; i--) {
+      if (!ops[i].op) continue;
+      var _op = ops[i].op.slice();
+      // Invert Op
+      _op = type.invert(_op);
+      content = type.apply(content, _op);
+    }
+  } else {
+    throw new Error("Cannot recover history from provided version and ops!");
+  }
+
+  var oldVersion = {
+    snapshot: content,
+    version: finalVersion,
+    type: doc.type,
+    docName: doc.docName
+  };
+
+  this.lastDoc = oldVersion;
+
+  return oldVersion;
 };
 
 // Called whenever (you guessed it!) the connection state changes. This will
@@ -1198,7 +1252,7 @@ Doc.prototype.flush = function() {
   // convenient in access control code to not need to worry about subscribing
   // to documents that don't exist.
   if (!this.paused && this.pendingData.length && this.connection.state === 'connected') {
-    // Try and send any pending ops. We can't send ops while in 
+    // Try and send any pending ops. We can't send ops while in
     this.inflightData = this.pendingData.shift();
 
     // This also sets action to 'submit'.
@@ -1229,7 +1283,7 @@ Doc.prototype._setWantSubscribe = function(value, callback, err) {
     if (callback) callback(err);
     return;
   }
-  
+
   if (!this.wantSubscribe !== !value) {
     // Call all the current subscribe/unsubscribe callbacks.
     for (var i = 0; i < this._subscribeCallbacks.length; i++) {
@@ -1394,7 +1448,7 @@ Doc.prototype._otApply = function(opData, context) {
     var type = this.type;
 
     var op = opData.op;
-    
+
     // The context needs to be told we're about to edit, just in case it needs
     // to store any extra data. (text-tp2 has this constraint.)
     for (var i = 0; i < this.editingContexts.length; i++) {
@@ -1475,7 +1529,7 @@ Doc.prototype._sendOpData = function() {
   msg.d = this.name;
 
   this.connection.sendOp(msg);
-   
+
   // The first time we send an op, its id and sequence number is implicit.
   if (!d.src) {
     d.src = this.connection.id;
@@ -1583,7 +1637,7 @@ Doc.prototype.create = function(type, data, context, callback) {
   var op = {create: {type:type, data:data}};
   if (this.type) {
     if (callback) callback('Document already exists', this._opErrorContext(op));
-    return 
+    return
   }
 
   this._submitOpData(op, context, callback);
@@ -1648,7 +1702,7 @@ Doc.prototype._tryRollback = function(opData) {
     }
 
     // ... and apply it locally, reverting the changes.
-    // 
+    //
     // This operation is applied to look like it comes from a remote context.
     // I'm still not 100% sure about this functionality, because its really a
     // local op. Basically, the problem is that if the client's op is rejected
@@ -1719,7 +1773,7 @@ Doc.prototype._opAcknowledged = function(msg) {
     if (msg.v !== this.version)
       throw new Error('Invalid version from server. This can happen when you submit ops in a submitOp callback.');
   }
-  
+
   // The op was committed successfully. Increment the version number
   this.version++;
 	this.emit('version update', this.version);
@@ -1816,7 +1870,7 @@ if (typeof require !== 'undefined') {
  * to connect
  *   connection.on('connected', ...)
  * and are finally able to work with shared documents
- *   connection.get('food', 'steak') // Doc 
+ *   connection.get('food', 'steak') // Doc
  *
  * @param socket @see bindToSocket
  */
@@ -1902,7 +1956,7 @@ Connection.prototype.bindToSocket = function(socket) {
     // Fall back to supporting old browserchannel 1.x API which implemented the
     // websocket API incorrectly. This will be removed at some point
     if (!data) data = msg;
-    
+
     // Some transports don't need parsing.
     if (typeof data === 'string') data = JSON.parse(data);
 
@@ -2065,7 +2119,7 @@ Connection.prototype._setState = function(newState, data) {
 
   this.opQueue = null;
   this.bsEnd();
-  
+
   // Its important that query resubscribes are sent after documents to make sure
   // the server knows all the documents we're subscribed to when it issues the
   // queries internally.
@@ -2097,7 +2151,7 @@ Connection.prototype.bsStart = function() {
 Connection.prototype.bsEnd = function() {
   // Only send bulk subscribe if not empty. Its weird using a for loop for
   // this, but it works pretty well.
-  for (var __unused in this.subscribeData) { 
+  for (var __unused in this.subscribeData) {
     this.send({a:'bs', s:this.subscribeData});
     break;
   }
@@ -2147,7 +2201,7 @@ Connection.prototype.send = function(msg) {
 
   if (!this.socket.canSendJSON)
     msg = JSON.stringify(msg);
-  
+
   this.socket.send(msg);
 };
 
@@ -2224,7 +2278,7 @@ Connection.prototype._destroyDoc = function(doc) {
   if (!hasKeys(collectionObject))
     delete this.collections[doc.collection];
 };
- 
+
 
 function hasKeys(object) {
   for (var key in object) return true;
@@ -2325,15 +2379,10 @@ Connection.prototype.createSubscribeQuery = function(index, q, options, callback
  *
  * This algorithm is O(N). I suspect you could speed it up somehow using regular expressions.
  */
-var applyChange = function(ctx, oldval, newval) {	
+var applyChange = function(ctx, oldval, newval) {
   // Strings are immutable and have reference equality. I think this test is O(1), so its worth doing.
   if (oldval === newval) return;
-	
-  // TODO: This is hard-coded solution for editing json documents (they must have a ['text'] property)
-	if (typeof oldval !== 'string') {
-		oldval = ctx.get().text;
-	}
-	
+
   var commonStart = 0;
   while (oldval.charAt(commonStart) === newval.charAt(commonStart)) {
     commonStart++;
@@ -2364,11 +2413,11 @@ var applyChange = function(ctx, oldval, newval) {
 window.sharejs.Doc.prototype.attachTextarea = function(elem, ctx) {
   if (!ctx) ctx = this.createContext();
 
-  if (!ctx.provides.text) throw new Error('Cannot attach to non-text document');
+  if (!ctx.provides.text && !ctx.get()['text']) throw new Error('Cannot attach to non-text document');
 
 	var snapshot = ctx.get();
   // TODO: This is hard-coded solution for editing json documents (they must have a ['text'] property)
-	if (typeof snapshot !== 'string') snapshot = snapshot.text;
+	if (typeof snapshot !== 'string') snapshot = snapshot['text'];
   elem.value = snapshot;
 
   // The current value of the element's text is stored so we can quickly check
@@ -2438,7 +2487,12 @@ window.sharejs.Doc.prototype.attachTextarea = function(elem, ctx) {
     setTimeout(function() {
       if (elem.value !== prevvalue) {
         prevvalue = elem.value;
-        applyChange(ctx, ctx.get(), elem.value.replace(/\r\n/g, '\n'));
+        // TODO: This is hard-coded solution for editing json documents (they must have a ['text'] property)
+        var oldval = ctx.get();
+        if (typeof oldval !== 'string') {
+          oldval = ctx.get()['text'];
+        }
+        applyChange(ctx, oldval, elem.value.replace(/\r\n/g, '\n'));
       }
     }, 0);
   };
