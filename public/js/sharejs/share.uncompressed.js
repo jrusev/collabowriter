@@ -986,7 +986,12 @@ Doc.prototype.getOps = function(options) {
 Doc.prototype.getSnapshotAtRevision = function(version) {
   // var message = {"a":"get version", "v": version};
   // this._send(message);
-  var from = this.lastDoc ? this.lastDoc.version : this.version;
+  this.lastDoc = this.lastDoc || this;
+
+  if (this.lastDoc.version == version) return;
+
+  this.lastDoc.targetVersion = version;
+  var from = this.lastDoc.version;
   var to = version;
   if (from > to) {
     var tmp = from;
@@ -994,6 +999,7 @@ Doc.prototype.getSnapshotAtRevision = function(version) {
     to = tmp;
   }
   var message = {"a":"get ops", "from": from, "to": to};
+  console.log(message)
   this._send(message);
 };
 
@@ -1141,8 +1147,11 @@ Doc.prototype._onMessage = function(msg) {
 			break;
 
     case 'get ops':
-      var oldVersion = this._getVersionFromOps(msg.data);
-      this.emit('get version', oldVersion.snapshot['text']);
+      var self = this;
+      this._getVersionFromOps(msg.data, function (err, oldVersion) {
+        if (err) return;
+        self.emit('get version', oldVersion.snapshot['text']);
+      });
       break;
 
     default:
@@ -1151,14 +1160,17 @@ Doc.prototype._onMessage = function(msg) {
   }
 };
 
-Doc.prototype._getVersionFromOps = function(ops) {
-  if (!ops) return;
+Doc.prototype._getVersionFromOps = function(ops, cb) {
+  if (!ops) return cb('Error!');
 
-  var doc = this.lastDoc || this;
-  // invert and apply ops
+  var target = this.lastDoc.targetVersion;
+  if (target !== ops[0].v && target !== ops[ops.length - 1].v + 1) {
+    return cb('Waiting more data!');
+  }
+
   var type = types['json0'];
-  var content = doc.snapshot;
-  if (doc.version == ops[0].v) {
+  var content = this.lastDoc.snapshot;
+  if (this.lastDoc.version == ops[0].v) {
     var finalVersion = ops[ops.length - 1].v + 1;
     // In normal order
     for (var i = 0; i < ops.length; i++) {
@@ -1166,7 +1178,7 @@ Doc.prototype._getVersionFromOps = function(ops) {
       var _op = ops[i].op.slice();
       content = type.apply(content, _op);
     }
-  } else if (doc.version == ops[ops.length - 1].v + 1) {
+  } else if (this.lastDoc.version == ops[ops.length - 1].v + 1) {
     var finalVersion = ops[0].v;
     // In reverse order
     for (var i = ops.length - 1; i >= 0; i--) {
@@ -1183,13 +1195,13 @@ Doc.prototype._getVersionFromOps = function(ops) {
   var oldVersion = {
     snapshot: content,
     version: finalVersion,
-    type: doc.type,
-    docName: doc.docName
+    type: this.type,
+    docName: this.docName
   };
 
   this.lastDoc = oldVersion;
 
-  return oldVersion;
+  return cb(null,oldVersion);
 };
 
 // Called whenever (you guessed it!) the connection state changes. This will
